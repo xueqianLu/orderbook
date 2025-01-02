@@ -3,17 +3,15 @@ package orderbook
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"testing"
 	"time"
-
-	"github.com/shopspring/decimal"
 )
 
 func addDepth(ob *OrderBook, prefix string, quantity decimal.Decimal) {
 	for i := 50; i < 100; i = i + 10 {
 		ob.ProcessLimitOrder(Buy, fmt.Sprintf("%sbuy-%d", prefix, i), quantity, decimal.New(int64(i), 0))
 	}
-
 	for i := 100; i < 150; i = i + 10 {
 		ob.ProcessLimitOrder(Sell, fmt.Sprintf("%ssell-%d", prefix, i), quantity, decimal.New(int64(i), 0))
 	}
@@ -240,7 +238,7 @@ func TestPriceCalculation(t *testing.T) {
 	addDepth(ob, "15-", decimal.New(10, 0))
 	t.Log(ob)
 
-	price, err := ob.CalculateMarketPrice(Buy, decimal.New(115, 0))
+	price, _, err := ob.CalculateMarketPrice(Buy, decimal.New(115, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +247,7 @@ func TestPriceCalculation(t *testing.T) {
 		t.Fatal("invalid price", price)
 	}
 
-	price, err = ob.CalculateMarketPrice(Buy, decimal.New(200, 0))
+	price, _, err = ob.CalculateMarketPrice(Buy, decimal.New(200, 0))
 	if err == nil {
 		t.Fatal("invalid quantity count")
 	}
@@ -260,7 +258,7 @@ func TestPriceCalculation(t *testing.T) {
 
 	// -------
 
-	price, err = ob.CalculateMarketPrice(Sell, decimal.New(115, 0))
+	price, _, err = ob.CalculateMarketPrice(Sell, decimal.New(115, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,7 +267,7 @@ func TestPriceCalculation(t *testing.T) {
 		t.Fatal("invalid price", price)
 	}
 
-	price, err = ob.CalculateMarketPrice(Sell, decimal.New(200, 0))
+	price, _, err = ob.CalculateMarketPrice(Sell, decimal.New(200, 0))
 	if err == nil {
 		t.Fatal("invalid quantity count")
 	}
@@ -290,5 +288,5 @@ func BenchmarkLimitOrder(b *testing.B) {
 		ob.ProcessMarketOrder(Sell, decimal.New(200, 0))                                  // 1 ts = total 32
 	}
 	elapsed := time.Since(stopwatch)
-	fmt.Printf("\n\nElapsed: %s\nTransactions per second (avg): %f\n", elapsed, float64(b.N*32)/elapsed.Seconds())
+	fmt.Printf("\n\nElapsed: %s\n, Total: %d\n, Transactions per second (avg): %f\n", elapsed, b.N, float64(b.N*32)/elapsed.Seconds())
 }
