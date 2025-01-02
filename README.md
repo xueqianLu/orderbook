@@ -187,6 +187,12 @@ quantityLeft - 4
 
 ```
 
+## Benchmark
+Run command to do benchmark tests:
+```shell
+go test -bench='LimitOrder$' -benchtime=100000x -cpu=1 .
+```
+
 ## License
 
 The MIT License (MIT)
