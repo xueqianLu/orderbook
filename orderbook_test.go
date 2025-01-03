@@ -346,6 +346,6 @@ func BenchmarkLimitOrderWithStore(b *testing.B) {
 		} // 1 ts = total 32
 	}
 	elapsed := time.Since(stopwatch)
-	fmt.Printf("\n\nElapsed: %s\n, Total: %d\n, Write metrics: %d\n, Transactions per second (avg): %f\n", elapsed, b.N*32, float64(b.N*32)/elapsed.Seconds(), store.Metric())
+	fmt.Printf("\n\nElapsed: %s\n, Total: %d\n, Write metrics: %d\n, Transactions per second (avg): %f\n", elapsed, b.N*32, store.Metric(), float64(b.N*32)/elapsed.Seconds())
 	store.Stop()
 }

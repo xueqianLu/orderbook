@@ -39,6 +39,7 @@ func (os *OrderStore) work() {
 
 func (os *OrderStore) Start() {
 	go os.work()
+	go os.work()
 }
 
 func (os *OrderStore) Stop() {
