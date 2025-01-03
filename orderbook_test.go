@@ -19,6 +19,29 @@ func addDepth(ob *OrderBook, prefix string, quantity decimal.Decimal) {
 	return
 }
 
+func addDepthWithStore(os *OrderStore, ob *OrderBook, prefix string, quantity decimal.Decimal) {
+	for i := 50; i < 100; i = i + 10 {
+		d, p, _, _ := ob.ProcessLimitOrder(Buy, fmt.Sprintf("%sbuy-%d", prefix, i), quantity, decimal.New(int64(i), 0))
+		if d != nil {
+			os.MStore(d)
+		}
+		if p != nil {
+			os.Store(p)
+		}
+	}
+	for i := 100; i < 150; i = i + 10 {
+		d, p, _, _ := ob.ProcessLimitOrder(Sell, fmt.Sprintf("%ssell-%d", prefix, i), quantity, decimal.New(int64(i), 0))
+		if d != nil {
+			os.MStore(d)
+		}
+		if p != nil {
+			os.Store(p)
+		}
+	}
+
+	return
+}
+
 func TestLimitPlace(t *testing.T) {
 	ob := NewOrderBook()
 	quantity := decimal.New(2, 0)
@@ -289,4 +312,40 @@ func BenchmarkLimitOrder(b *testing.B) {
 	}
 	elapsed := time.Since(stopwatch)
 	fmt.Printf("\n\nElapsed: %s\n, Total: %d\n, Transactions per second (avg): %f\n", elapsed, b.N, float64(b.N*32)/elapsed.Seconds())
+}
+
+func BenchmarkLimitOrderWithStore(b *testing.B) {
+	ob := NewOrderBook()
+	if b.N == 1 {
+		return
+	}
+	store := NewStore("./", "order")
+	store.Start()
+	stopwatch := time.Now()
+	for i := 0; i < b.N; i++ {
+		addDepthWithStore(store, ob, "05-", decimal.New(10, 0)) // 10 ts
+		addDepthWithStore(store, ob, "10-", decimal.New(10, 0)) // 10 ts
+		addDepthWithStore(store, ob, "15-", decimal.New(10, 0)) // 10 ts
+		{
+			d, p, _, _ := ob.ProcessLimitOrder(Buy, "order-b150", decimal.New(160, 0), decimal.New(150, 0))
+			if d != nil {
+				store.MStore(d)
+			}
+			if p != nil {
+				store.Store(p)
+			}
+		} // 1 ts
+		{
+			d, p, _, _, _ := ob.ProcessMarketOrder(Sell, decimal.New(200, 0))
+			if d != nil {
+				store.MStore(d)
+			}
+			if p != nil {
+				store.Store(p)
+			}
+		} // 1 ts = total 32
+	}
+	elapsed := time.Since(stopwatch)
+	fmt.Printf("\n\nElapsed: %s\n, Total: %d\n, Write metrics: %d\n, Transactions per second (avg): %f\n", elapsed, b.N*32, float64(b.N*32)/elapsed.Seconds(), store.Metric())
+	store.Stop()
 }
